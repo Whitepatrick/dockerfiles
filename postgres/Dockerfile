@@ -15,10 +15,8 @@ USER postgres
 # then create a database `docker` owned by the ``docker`` role.
 # Note: here we use ``&&\`` to run commands one after the other - the ``\``
 #       allows the RUN command to span multiple lines.
-RUN    /etc/init.d/postgresql start &&\
-    psql --command "CREATE USER patrick WITH SUPERUSER LOGIN;" &&\
-    createdb -O patrick twentyeyesdb
-RUN useradd -r -g postgres patrick
+RUN /etc/init.d/postgresql start \
+    psql --command "CREATE USER twentyeyesdb WITH SUPERUSER LOGIN;"
 # Adjust PostgreSQL configuration so that remote connections to the
 # database are possible.
 RUN echo "host all  all    0.0.0.0/0  md5" >> /etc/postgresql/9.3/main/pg_hba.conf
@@ -31,23 +29,16 @@ EXPOSE 5432
 
 # Add VOLUMEs to allow backup of config, logs and databases
 VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
-USER patrick
-RUN mkdir /home/patrick && touch /home/patrick/.pgpass
-RUN chmod 600 /home/patrick/.pgpass
-RUN echo "twentyeyes_pg:5432:*:*:*" > /home/patrick/.pgpass
+
 # Set the default command to run when starting the container
 CMD ["/usr/lib/postgresql/9.3/bin/postgres", "-D", "/var/lib/postgresql/9.3/main", "-c", "config_file=/etc/postgresql/9.3/main/postgresql.conf"]
 
 EXPOSE 5432
-#CMD ["postgres"]
+CMD ["postgres"]
 
 # pg container
 # docker run --name twentyeyes_pg -e POSTGRES_PASSWORD=albatross -d postgres
-# app using pg
-# docker run --name twentyeyes_web \
-# -v /home/workspace/twenteyes_web:/var/www/twentyeyes_web \
-# --link twentyeyes_pg:postgres \
-# -d docker.io/whitepatrick/twenteyes_web
+
 
 # available variabls
 # POSTGRES_PASSWORD

@@ -1,29 +1,33 @@
-FROM debian:sid
-MAINTAINER Jessica Frazelle <jess@docker.com>
+FROM ubuntu:14.04
+MAINTAINER Zaphod Beeblebrox <whitep@vcu.edu>
 
-RUN sed -i.bak 's/sid main/sid main contrib/g' /etc/apt/sources.list && \
-	apt-get update && apt-get install -y \
-	bzip2 \
-	ca-certificates \
-	curl \
-	flashplugin-nonfree \
-	hicolor-icon-theme \
-	libasound2 \
-	libdbus-glib-1-2 \
-	libgl1-mesa-dri \
-	libgl1-mesa-glx \
-	--no-install-recommends \
-	&& rm -rf /var/lib/apt/lists/*
+# sudo docker run --rm -e DISPLAY \
+#-v /tmp/.X11-unix:/tmp/.X11-unix \
+#-v $HOME/.Xauthority:/home/zaphod/.Xauthority \
+#-v $HOME/Downloads:/home/zaphod/Downloads \
+#--name firefox \
+# firefox
 
-ENV FIREFOX_VERSION 41.0
-ENV LANG en-US
+RUN apt-get -y install software-properties-common && apt-add-repository multiverse
 
-RUN curl -sSL "https://ftp.mozilla.org/pub/mozilla.org/firefox/releases/${FIREFOX_VERSION}/linux-x86_64/${LANG}/firefox-${FIREFOX_VERSION}.tar.bz2" -o /tmp/firefox.tar.bz2 \
-	&& mkdir -p /opt/firefox \
-	&& tar -xjf /tmp/firefox.tar.bz2 -C /opt/firefox --strip-components 1 \
-	&& rm /tmp/firefox.tar.bz2* \
-	&& ln -s /opt/firefox/firefox /usr/bin/firefox
+RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula boolean true | debconf-set-selections
 
-COPY local.conf /etc/fonts/local.conf
+RUN apt-get update && apt-get -y install --install-recommends firefox \
+	flashplugin-installer \
+	dbus-x11 \
+	pulseaudio \
+	gstreamer1.0-pulseaudio \
+	gstreamer1.0-plugins-good \
+	ubuntu-restricted-extras
 
-ENTRYPOINT [ "/usr/bin/firefox" ]
+
+RUN export uid=1000 gid=1000 && \
+    mkdir -p /home/zaphod && \
+    echo "zaphod:x:${uid}:${gid}:Zaphod Beeblebrox,,,:/home/zaphod:/bin/bash" >> /etc/passwd && \
+    echo "zaphod:x:${uid}:" >> /etc/group && \
+    echo "zaphod ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/zaphod && \
+    chmod 0440 /etc/sudoers.d/zaphod && \
+    chown ${uid}:${gid} -R /home/zaphod
+
+USER zaphod
+CMD ["/usr/bin/firefox" ,"-new-instance", "--no-remote"]

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+sudo docker run --rm -e DISPLAY \
+--memory=1024mb \
+--net=host \
+-v /etc/localtime:/etc/localtime \
+-v $HOME/.Xauthority:/zaphod/.Xauthority \
+-v $HOME/Downloads:/home/zaphod/Downloads \
+--name=firefox \
+firefox
